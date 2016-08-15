@@ -22,9 +22,9 @@ git merge openshift/master -s recursive -X ours
 ```
 
 6. Quando a mesclagem (merge) estiver pronto, você estará pronto para atualizar o seu repositório openshift.
- ```bash
-git push openshift HEAD
 
+```bash
+git push openshift HEAD
 ```
 
 7. Crie uma aplicação python-3.3 em openshift.com.
