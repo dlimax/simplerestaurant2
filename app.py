@@ -42,10 +42,10 @@ if __name__ == '__main__':
 
    if environ == OPENSHIFT_ENV:
       ip = os.environ['OPENSHIFT_PYTHON_IP']
+      port = os.environ['OPENSHIFT_PYTHON_PORT']
    else:
       ip = '127.0.0.1'
+      port = 8080
 
-   port = 8080
    print('Starting WSGIServer on %s:%d ... ' % (ip, port))
    run_simple_httpd_server(zapp.application, ip, port)
-
