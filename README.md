@@ -10,3 +10,6 @@ Python 3.3 + Bottle running at Openshift
 3. Adicione um cartucho Mongodb para o app.
 
 4. Acesse    http://<app name>-<your namespace>.rhcloud.com/. Se tudo deu certo, aparecerá "Boa sorte!"
+
+
+Postman collection link: https://www.getpostman.com/collections/79b47e84be788f6aa1a1
