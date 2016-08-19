@@ -1,5 +1,20 @@
-Python 3.3 + Bottle running at Openshift
+Quickstart Python + MongoDB no Openshift
 =============================
+
+Este repositório possui uma aplicação python que utiliza o framework bottle e o MongoDB, e que está pronta para ser utilizada localmente e no Openshift. Além disso, está implementada a funcionalidade de autenticação utilizando JWT.
+
+Para rodar localmente:
+
+1. Clone este repositório
+
+2. Instale os requisitos em requirements.txt
+
+3. rode o script app.py, localizado na raiz.
+
+4. Acesse http://localhost:8080/. Se tudo deu certo, aparecerá "Boa sorte!"
+
+
+Para rodar este projeto no openshift:
 
 1. Crie uma conta em https://www.openshift.com
 
@@ -9,6 +24,6 @@ Python 3.3 + Bottle running at Openshift
 
 3. Adicione um cartucho Mongodb para o app.
 
-4. Acesse    http://<app name>-<your namespace>.rhcloud.com/. Se tudo deu certo, aparecerá "Boa sorte!"
+4. Acesse    http://appname-namespace.rhcloud.com/. Se tudo deu certo, aparecerá "Boa sorte!"
 
-[![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/79b47e84be788f6aa1a1)
+
