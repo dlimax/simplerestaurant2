@@ -1,9 +1,6 @@
-from bottle import Bottle
+#!/usr/bin/env python
 
 import pymongo
-
-mongodb_host = None
-mongodb_db_name = None
 
 try:
 	dummy = os.environ['OPENSHIFT_HOMEDIR']
