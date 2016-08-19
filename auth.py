@@ -19,8 +19,6 @@ auth_app = application
 token_timeout = 15 # minutes
 jwt_algorithm = 'HS256'
 
-user = None 
-
 try:
 	# you may not commit secret_key.txt
 	auth_app.config['SECRET_KEY'] = open('secret_key.txt', 'rb').read()
@@ -38,13 +36,13 @@ def jwt_required(f):
 	@wraps(f)
 	def decorated_function(*args, **kwargs):
 		if not request.headers.get('Authorization'):
-			return HTTPResponse(status=401, body="Token nao enviado.")
+			return HTTPResponse(status=401, body="Token is required.")
 		try:
 			payload = parse_token(request)
 		except DecodeError:
-			return HTTPResponse(status=401, body="Token invalido.")
+			return HTTPResponse(status=401, body="Invalid token.")
 		except ExpiredSignature:
-			return HTTPResponse(status=401, body="Token expirado.")
+			return HTTPResponse(status=401, body="Token is expired.")
 		return f(user, *args, **kwargs)
 	return decorated_function
 
@@ -67,7 +65,7 @@ def admin_required(f):
 	return decorated_function
 
 
-# validate user and password agains users 'database'
+# validates user and password against users collection
 def authenticate(email, pwd):
 	db = get_database_connection() # conecta com a base de dados e armazena a conexao em db.
 	user = db.users.find_one({'email': email}) # find_one retorna um documento, ou None
@@ -90,7 +88,7 @@ def create_token(user):
 	token = jwt.encode(payload, auth_app.config['SECRET_KEY'], algorithm=jwt_algorithm)
 	return token.decode('unicode_escape')
 
-
+# parses a jwt token
 def parse_token(req):
 	token = req.headers.get('Authorization').split()[1]
 	return jwt.decode(token, auth_app.config['SECRET_KEY'], algorithms=jwt_algorithm)
