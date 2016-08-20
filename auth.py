@@ -19,6 +19,8 @@ auth_app = application
 token_timeout = 15 # minutes
 jwt_algorithm = 'HS256'
 
+user = None
+
 try:
 	# you may not commit secret_key.txt
 	auth_app.config['SECRET_KEY'] = open('secret_key.txt', 'rb').read()

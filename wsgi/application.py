@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import os, pymongo, json, hashlib, bson
+
 from bson.json_util import dumps as mongo_dumps
+from bson.objectid import ObjectId
 from bottle import Bottle, request, response, HTTPResponse
 
 from db import get_database_connection
@@ -46,11 +48,24 @@ def create_user():
 # curl -H "Content-Type: application/json" -X GET  http://localhost:8080/api/v1/users
 @app.get('/api/v1/users')
 @jwt_required
-def list_user(user):
+def list_users(user):
 	response.content_type='application/json'
 	db = get_database_connection() 
 	users = db.users.find()		
 	return mongo_dumps(users)
+
+
+# curl -H "Content-Type: application/json" -X POST -d '{"name": "Eduardo", "email": "xyz@gmail.com"}' http://localhost:8080/api/v1/1231231/edit
+@app.post('/api/v1/user/<user_id>/edit')
+@jwt_required
+def edit_user(user, user_id):
+	response.content_type='application/json'
+	data = request.json
+	db = get_database_connection()
+	db.users.update({'_id':ObjectId(user_id)},{'$set':{'name':data['name'], 'email':data['email']}})
+	return json.dumps({'success': True, 'msg': 'Usuario editado'})
+	
+
 
 # curl -H "Content-Type: application/json" -X GET  http://localhost:8080/api/v1/admin/users
 @app.get('/api/v1/admin/users')
