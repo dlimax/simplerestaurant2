@@ -41,6 +41,7 @@ def jwt_required(f):
 			return HTTPResponse(status=401, body="Token is required.")
 		try:
 			payload = parse_token(request)
+			user = payload['sub']			
 		except DecodeError:
 			return HTTPResponse(status=401, body="Invalid token.")
 		except ExpiredSignature:
@@ -81,7 +82,11 @@ def authenticate(email, pwd):
 def create_token(user):
 	payload = {
 		# subject
-		'sub': {'email': user['email'], 'is_admin': user.get('is_admin', False)},
+		'sub': {'email': user['email'], 
+				'id': str(user['_id']), 
+				'name': user['name'],
+				'is_admin': user.get('is_admin', False)
+				},
 		# issued at
 		'iat': datetime.utcnow(),
 		# expiry
