@@ -14,12 +14,6 @@ application = Bottle()
 app = application
 app.merge(auth_app)
 
-# curl -H "Content-Type: application/json" -X GET  http://localhost:8080/
-@app.get('/')
-def index():
-    return "Hello World!"
-
-# curl -H "Content-Type: application/json" -X POST -d '{"email":"scott@gmail.com", "password":"12345"}' http://localhost:8080/api/v1/signin
 @app.post('/api/v1/signin')
 def login():
 	data = request.json
@@ -29,7 +23,6 @@ def login():
 	else:
 		return HTTPResponse(status=401, body="Unauthorized.")
 
-# curl -H "Content-Type: application/json" -X POST -d '{"name": "Eduardo", "email": "xyz@gmail.com", "password":"xyz"}' http://localhost:8080/api/v1/users/create
 @app.post('/api/v1/users/create')
 def create_user():	
 	response.content_type='application/json'
@@ -45,33 +38,68 @@ def create_user():
 		db.users.insert({'name': name, 'email': email, 'password': password})
 		return json.dumps({'success': True, 'msg': 'user added.'})
 
-# curl -H "Content-Type: application/json" -X GET  http://localhost:8080/api/v1/users
-@app.get('/api/v1/users')
-@jwt_required
-def list_users(user):
-	response.content_type='application/json'
-	db = get_database_connection() 
-	users = db.users.find()		
-	return mongo_dumps(users)
-
-
-# curl -H "Content-Type: application/json" -X POST -d '{"name": "Eduardo", "email": "xyz@gmail.com"}' http://localhost:8080/api/v1/1231231/edit
 @app.post('/api/v1/user/<user_id>/edit')
 @jwt_required
 def edit_user(user, user_id):
+	if user['id']!=user_id and user['is_admin']==False:
+		HTTPResponse(status=401, body="Unauthorized.")
+	response.content_type='application/json'
+	data = request.json
+	db = get_database_connection()	
+	db.users.update(
+		{'_id':ObjectId(user_id)},
+		{'$set':
+			{'name':data['name'], 'email':data['email']}
+		})
+	return json.dumps({'success': True, 'msg': 'User edited.'})	
+
+@app.get('/api/v1/menu/items')
+def show_menu():
+	db = get_database_connection()	
+	data = db.menu.find()
+	return mongo_dumps({'success': True, 'menu': data})
+
+
+@app.post('/api/v1/user/<user_id>/orders/create')
+@jwt_required
+def create_order(user, user_id):
+	if user['id']!=user_id and user['is_admin']==False:
+		HTTPResponse(status=401, body="Unauthorized.")
+	response.content_type='application/json'
+	data = request.json
+	data['user'] = user_id
+	db = get_database_connection()
+	db.orders.insert(data)
+	return json.dumps({'success': True, 'msg': 'Order created.'})
+
+@app.post('/api/v1/menu/sessions/create')
+@admin_required
+def create_menu_session(user):
 	response.content_type='application/json'
 	data = request.json
 	db = get_database_connection()
-	db.users.update({'_id':ObjectId(user_id)},{'$set':{'name':data['name'], 'email':data['email']}})
-	return json.dumps({'success': True, 'msg': 'Usuario editado'})
-	
+	session = db.menu.find_one({'_id': data['name']})
+	if session:
+		return json.dumps({'success': True, 'msg': 'Menu session already exists.'})
+	else:
+		db.menu.insert({'_id': data['name']})
+		return json.dumps({'success': True, 'msg': 'Menu session created.'})
 
-
-# curl -H "Content-Type: application/json" -X GET  http://localhost:8080/api/v1/admin/users
-@app.get('/api/v1/admin/users')
+@app.post('/api/v1/menu/items/create')
 @admin_required
-def list_user_from_admin(user):
+def create_item(user):
 	response.content_type='application/json'
-	db = get_database_connection() 
-	users = db.users.find()		
-	return mongo_dumps(users)
+	data = request.json
+	db = get_database_connection()
+	session = db.menu.find_one({'_id': data['session']})
+	if session:
+		if session.get('menu_items', False):
+			for item in session.get('menu_items', []):
+				if item['name']==data['name']:
+					return json.dumps({'success': True, 'msg': 'Item already exists.'})
+	else:
+		return json.dumps({'success': True, 'msg': 'Menu session doesn`t exists.'})
+	db.menu.update(
+		{'_id': data['session']}, 
+		{'$push': {'menu_items': {'name': data['name'], 'price': data['price']} }})
+	return json.dumps({'success': True, 'msg': 'Item created.'})	
