@@ -10,6 +10,8 @@ from db import get_database_connection
 
 from auth import auth_app, jwt_required, admin_required, authenticate
 
+from datetime import datetime
+
 application = Bottle()
 app = application
 app.merge(auth_app)
@@ -49,7 +51,7 @@ def edit_user(user, user_id):
 	db.users.update(
 		{'_id':ObjectId(user_id)},
 		{'$set':
-			{'name':data['name'], 'email':data['email']}
+			{'name':data['name']}
 		})
 	return json.dumps({'success': True, 'msg': 'User edited.'})	
 
@@ -59,7 +61,6 @@ def show_menu():
 	data = db.menu.find()
 	return mongo_dumps({'success': True, 'menu': data})
 
-
 @app.post('/api/v1/user/<user_id>/orders/create')
 @jwt_required
 def create_order(user, user_id):
@@ -67,10 +68,21 @@ def create_order(user, user_id):
 		HTTPResponse(status=401, body="Unauthorized.")
 	response.content_type='application/json'
 	data = request.json
-	data['user'] = user_id
+	order_date = datetime.now()
+	order = {'user': user_id, 'items': data, 'date': order_date}
 	db = get_database_connection()
-	db.orders.insert(data)
-	return json.dumps({'success': True, 'msg': 'Order created.'})
+	objs = []
+	for item in data:
+		obj = db.items.find_one({'_id': ObjectId(item['id'])})
+		if obj:
+			item['name'] = obj['name']
+			item['value'] = item['quantity'] * obj['price']
+			objs.append(item)
+		else:
+			return json.dumps({'success': True, 'msg': 'Invalid Item in Order.'})
+	db.orders.insert(order)	
+	return mongo_dumps({'success': True, 'msg': 'Order created.', 
+						'orders': objs, 'date': order_date.strftime('%d/%m/%y %H:%M:%s')})
 
 @app.post('/api/v1/menu/sessions/create')
 @admin_required
@@ -99,7 +111,9 @@ def create_item(user):
 					return json.dumps({'success': True, 'msg': 'Item already exists.'})
 	else:
 		return json.dumps({'success': True, 'msg': 'Menu session doesn`t exists.'})
+	oid_ins = db.items.insert({'name': data['name'], 'price': data['price']})
+	id_ins = str(oid_ins)
 	db.menu.update(
 		{'_id': data['session']}, 
-		{'$push': {'menu_items': {'name': data['name'], 'price': data['price']} }})
+		{'$push': {'menu_items': {'id': id_ins, 'name': data['name'], 'price': data['price']} }})
 	return json.dumps({'success': True, 'msg': 'Item created.'})	
